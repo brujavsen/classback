@@ -90,10 +90,9 @@ export default function Register() {
     <div className="login-container animate-fade-in">
       <div className="login-card glass-panel">
         <div className="login-header">
-          <div className="logo-icon-wrapper">
-            <BookOpen size={32} className="logo-icon" />
+          <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'contain' }} />
           </div>
-          <Typewriter />
           <p>Únete a ClassBack y organiza tu material.</p>
         </div>
 
