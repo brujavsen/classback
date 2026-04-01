@@ -91,7 +91,7 @@ export default function Register() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
-            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'contain' }} />
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '50%' }} />
           </div>
           <p>Únete a ClassBack y organiza tu material.</p>
         </div>

@@ -4,6 +4,7 @@ import { Book, Plus, Users, PlusCircle, Settings, Loader2, X, User, Trash2 } fro
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
+import Typewriter from '../components/Typewriter';
 import './Dashboard.css';
 
 const CARD_COLORS = ['#6366f1', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -137,7 +138,7 @@ export default function Dashboard() {
       <header className="dashboard-header glass-panel">
         <div className="header-brand">
           <Book className="brand-icon" />
-          <h2>ClassBack</h2>
+          <Typewriter />
         </div>
         <div className="header-actions">
           {isAdmin && (

@@ -51,7 +51,7 @@ export default function Login() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
-            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'contain' }} />
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '50%' }} />
           </div>
           <p>Tu material de estudio, organizado.</p>
         </div>
@@ -60,7 +60,7 @@ export default function Login() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="auth-provider-icon" />
           Continuar con Google
         </button>
-        
+
         <div className="auth-separator">
           <span>o usa tu correo</span>
         </div>
