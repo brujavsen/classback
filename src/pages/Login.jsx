@@ -51,7 +51,7 @@ export default function Login() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
-            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '50%' }} />
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '10%' }} />
           </div>
           <p>Tu material de estudio, organizado.</p>
         </div>

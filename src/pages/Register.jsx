@@ -47,7 +47,7 @@ export default function Register() {
         }
         throw signUpError;
       }
-      
+
       if (!data?.user) throw new Error('No se pudo obtener la sesión al registrar.');
 
       // 2. Insert profile row
@@ -59,7 +59,7 @@ export default function Register() {
 
       if (profileError) {
         if (profileError.message.includes('unique')) {
-           throw new Error('El nombre de usuario ya está en uso, intenta con otro.');
+          throw new Error('El nombre de usuario ya está en uso, intenta con otro.');
         }
         throw profileError;
       }
@@ -91,7 +91,7 @@ export default function Register() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
-            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '50%' }} />
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '10%' }} />
           </div>
           <p>Únete a ClassBack y organiza tu material.</p>
         </div>
@@ -126,7 +126,7 @@ export default function Register() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="auth-provider-icon" />
           Registrarse con Google
         </button>
-        
+
         <div className="auth-separator">
           <span>o usa tu correo real</span>
         </div>
