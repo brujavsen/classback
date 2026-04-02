@@ -2,22 +2,27 @@
 
 :root {
   /* Modern & Vibrant Color Palette */
-  /* Fondo crema muy suave en vez de gris */
-  --bg-primary: #FFFCF9;
-  --bg-anim-1: #FFFCF9;
-  --bg-anim-2: #FFF3EB;
-  --bg-anim-3: #F0F4FA;
-  --bg-anim-4: #FDFBFF;
+  /* Fondo crema casi nieve */
+  --bg-primary: #FCF9FA;
+  /* Esferas y fondos animados: Blush y Warm Gray muy sutiles */
+  --bg-anim-1: #FCF9FA;
+  --bg-anim-2: #FEE1E8;
+  --bg-anim-3: #FFF0F5;
+  --bg-anim-4: #FDF3F5;
   --bg-secondary: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.4);
-  --border-glass: rgba(255, 255, 255, 0.733);
-  /* Texto azul marino en lugar de gris carbón */
-  --text-primary: #171E36;
-  --text-secondary: #566483;
+  --bg-glass: rgba(255, 255, 255, 0.55);
+  --border-glass: rgba(255, 255, 255, 0.85);
+
+  /* Texto pardo oscuro con subtono rojo suave para descansar la vista */
+  --text-primary: #2B1D21;
+  --text-secondary: #68595D;
+
+  /* Colores primarios */
   --accent-primary: #DC143C;
   --accent-secondary: #E32636;
   --accent-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-  --border-color: #EAE8EC;
+  
+  --border-color: #F0E5E8;
   --error: #ef4444;
   --success: #10b981;
   --radius-sm: 8px;
