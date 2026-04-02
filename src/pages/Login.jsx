@@ -13,9 +13,32 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    // Reject obviously fake numeric domains like 123123.net
+    const domain = email.split('@')[1];
+    if (/^\d+\./.test(domain) || domain.split('.').length < 2) return false;
+    return true;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!email.trim()) {
+      setError('Por favor, ingresa tu correo electrónico.');
+      return;
+    }
+    if (!validateEmail(email.trim())) {
+      setError('Por favor, ingresa un correo electrónico verídico y válido.');
+      return;
+    }
+    if (!password) {
+      setError('Por favor, ingresa tu contraseña.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -74,7 +97,6 @@ export default function Login() {
                 type="email"
                 id="email"
                 placeholder="tu@correo.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -93,7 +115,6 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 placeholder="••••••••"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

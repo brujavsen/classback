@@ -66,6 +66,16 @@ export default function Dashboard() {
   const handleJoin = async (e) => {
     e.preventDefault();
     setJoinError('');
+
+    if (!joinCode.trim()) {
+      setJoinError('Por favor, ingresa el código de la clase.');
+      return;
+    }
+    if (!joinPassword) {
+      setJoinError('Por favor, ingresa la contraseña.');
+      return;
+    }
+
     setJoining(true);
     try {
       const { data: cls, error } = await supabase
@@ -97,6 +107,20 @@ export default function Dashboard() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError('');
+
+    if (!newName.trim()) {
+      setCreateError('Por favor, ingresa el nombre de la clase.');
+      return;
+    }
+    if (!newCode.trim()) {
+      setCreateError('Por favor, ingresa el código único.');
+      return;
+    }
+    if (!newPassword) {
+      setCreateError('Por favor, ingresa una contraseña de acceso.');
+      return;
+    }
+
     setCreating(true);
     try {
       const { error } = await supabase.from('classes').insert({
@@ -242,11 +266,11 @@ export default function Dashboard() {
             <form onSubmit={handleJoin}>
               <div className="form-group">
                 <label>Código de clase</label>
-                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} required />
+                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)}  />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} required />
+                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)}  />
               </div>
               {joinError && <p className="form-error" style={{ marginTop: 8 }}>{joinError}</p>}
               <div className="modal-actions">
@@ -270,15 +294,15 @@ export default function Dashboard() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label>Nombre de la clase</label>
-                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)}  />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Código único</label>
-                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)} required />
+                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)}  />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña de acceso</label>
-                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}  />
               </div>
               {createError && <p className="form-error" style={{ marginTop: 8 }}>{createError}</p>}
               <div className="modal-actions">

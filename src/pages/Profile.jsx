@@ -54,15 +54,19 @@ export default function Profile() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!newUsername.trim()) {
+      showAlert('Error', 'Por favor, ingresa un nombre de usuario.');
+      return;
+    }
     setUpdating(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ username: newUsername })
+        .update({ username: newUsername.trim() })
         .eq('id', user.id);
       
       if (error) throw error;
-      setProfile({ ...profile, username: newUsername });
+      setProfile({ ...profile, username: newUsername.trim() });
       setEditing(false);
     } catch (err) {
       showAlert('Error', 'No se pudo actualizar el nombre: ' + err.message);
@@ -73,6 +77,10 @@ export default function Profile() {
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
+    if (!newPassword) {
+      showAlert('Error', 'Por favor, ingresa la nueva contraseña.');
+      return;
+    }
     setUpdatingPassword(true);
     try {
       if (newPassword.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres.");
@@ -183,7 +191,6 @@ export default function Profile() {
                   type="text" 
                   value={newUsername} 
                   onChange={e => setNewUsername(e.target.value)} 
-                  required 
                 />
               </div>
               <div className="edit-actions">
@@ -203,14 +210,13 @@ export default function Profile() {
               <form onSubmit={handleUpdatePassword} className="edit-form">
                  <div className="form-group">
                    <label>Nueva contraseña</label>
-                   <input 
-                     type="password" 
-                     placeholder="••••••••"
-                     value={newPassword} 
-                     onChange={e => setNewPassword(e.target.value)} 
-                     required 
-                     minLength={6}
-                   />
+                    <input 
+                      type="password" 
+                      placeholder="••••••••"
+                      value={newPassword} 
+                      onChange={e => setNewPassword(e.target.value)} 
+                      minLength={6}
+                    />
                  </div>
                  <div className="edit-actions">
                    <button type="button" className="btn-ghost" onClick={() => setEditingPassword(false)}>Cancelar</button>

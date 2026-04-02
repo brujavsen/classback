@@ -14,8 +14,19 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
     setMessage('');
-    setLoading(true);
 
+    if (!email.trim()) {
+      setError('Por favor, ingresa tu correo electrónico.');
+      return;
+    }
+    // Basic format check
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email.trim())) {
+      setError('Por favor, ingresa un correo electrónico válido.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/profile`
@@ -49,7 +60,6 @@ export default function ResetPassword() {
                 type="email"
                 id="reset-email"
                 placeholder="tu@correo.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />

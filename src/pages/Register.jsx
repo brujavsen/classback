@@ -11,18 +11,44 @@ export default function Register() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [role, setRole] = useState('alumno');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [confirm, setConfirm] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const validateEmail = (email) => {
+    // Basic regex
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    
+    // Strict Verification: Reject purely numeric domains (spam-like) or missing providers
+    const domain = email.split('@')[1];
+    // Reject things like "123123.net" or "83749.xxx"
+    if (/^\d+\./.test(domain)) return false;
+    
+    // List of common disposable or known fake patterns (Basic prevention)
+    const badDomains = ['example.com', 'test.com', 'mailinator.com', '10minutemail.com'];
+    if (badDomains.includes(domain.toLowerCase())) return false;
+
+    return true;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+
+    // MANUAL VALIDATIONS (replacing HTML required)
+    if (!email.trim()) {
+       setError('Por favor, ingresa tu correo electrónico.');
+       return;
+    }
+    if (!validateEmail(email.trim())) {
+       setError('Usa un correo real (ej: gmail, hotmail). De lo contrario, no podrás recuperar tu cuenta.');
+       return;
+    }
+    if (!username.trim()) {
+       setError('Por favor, elige un nombre de usuario.');
+       return;
+    }
+    if (!password) {
+       setError('Por favor, crea una contraseña.');
+       return;
+    }
 
     if (password !== confirm) {
       setError('Las contraseñas no coinciden.');
@@ -140,7 +166,6 @@ export default function Register() {
                 type="email"
                 id="reg-email"
                 placeholder="tu@correo.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -155,7 +180,6 @@ export default function Register() {
                 type="text"
                 id="reg-username"
                 placeholder="tu_usuario"
-                required
                 minLength={3}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -194,7 +218,6 @@ export default function Register() {
                 type={showConfirm ? 'text' : 'password'}
                 id="reg-password-confirm"
                 placeholder="••••••••"
-                required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
               />
