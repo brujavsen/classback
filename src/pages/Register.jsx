@@ -11,6 +11,15 @@ export default function Register() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [role, setRole] = useState('alumno');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirm, setConfirm] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const validateEmail = (email) => {
     // Basic regex
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,7 +204,6 @@ export default function Register() {
                 type={showPassword ? 'text' : 'password'}
                 id="reg-password"
                 placeholder="••••••••"
-                required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

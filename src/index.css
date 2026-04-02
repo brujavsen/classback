@@ -41,21 +41,22 @@ input[type="email"],
 input[type="password"],
 input[type="number"],
 select {
-  height: 48px !important;
-  font-size: 16px !important;
-  background: var(--bg-secondary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-md) !important;
-  padding: 0 16px !important;
-  transition: var(--transition) !important;
+  height: 48px;
+  font-size: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding-left: 16px;
+  padding-right: 16px;
+  transition: var(--transition);
   width: 100%;
   box-sizing: border-box;
 }
 
 input:focus {
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 2px rgba(220, 20, 61, 0.2) !important;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(220, 20, 61, 0.2);
   outline: none;
 }
 
