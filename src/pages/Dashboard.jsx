@@ -48,13 +48,13 @@ export default function Dashboard() {
         .from('class_members')
         .select('class_id, classes(*)')
         .eq('user_id', user.id);
-      
+
       const memberClasses = (memberClassesData || []).map(m => m.classes);
 
       // Combine and unique by ID (in case an admin is also a member, though unlikely)
       const combined = [...(adminClasses || []), ...memberClasses];
       const unique = Array.from(new Map(combined.map(c => [c.id, c])).values());
-      
+
       setClasses(unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } finally {
       setFetching(false);
@@ -92,7 +92,7 @@ export default function Dashboard() {
         class_id: cls.id,
         user_id: user.id,
       });
-      if (memberError && memberError.code !== '23505') throw memberError; 
+      if (memberError && memberError.code !== '23505') throw memberError;
 
       setShowJoin(false);
       setJoinCode(''); setJoinPassword('');
@@ -161,7 +161,6 @@ export default function Dashboard() {
     <div className="dashboard-layout animate-fade-in">
       <header className="dashboard-header glass-panel">
         <div className="header-brand">
-          <Book className="brand-icon" />
           <Typewriter />
         </div>
         <div className="header-actions">
@@ -173,7 +172,7 @@ export default function Dashboard() {
           <button className="btn-secondary header-btn" onClick={() => setShowJoin(true)}>
             <PlusCircle size={18} /> Unirse a clase
           </button>
-          
+
           <div className="header-user">
             <span className={`role-badge ${user?.role}`}>
               {user?.role === 'admin' ? 'Admin' : 'Alumno'}
@@ -266,11 +265,11 @@ export default function Dashboard() {
             <form onSubmit={handleJoin}>
               <div className="form-group">
                 <label>Código de clase</label>
-                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)}  />
+                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)}  />
+                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} />
               </div>
               {joinError && <p className="form-error" style={{ marginTop: 8 }}>{joinError}</p>}
               <div className="modal-actions">
@@ -294,15 +293,15 @@ export default function Dashboard() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label>Nombre de la clase</label>
-                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)}  />
+                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Código único</label>
-                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)}  />
+                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña de acceso</label>
-                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}  />
+                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               {createError && <p className="form-error" style={{ marginTop: 8 }}>{createError}</p>}
               <div className="modal-actions">
