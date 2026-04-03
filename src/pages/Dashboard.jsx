@@ -95,12 +95,12 @@ export default function Dashboard() {
     try {
       const { data: cls, error } = await supabase
         .from('classes')
-        .select('id, password, admin_id')
+        .select('id, admin_id')
         .eq('code', joinCode.trim().toUpperCase())
+        .eq('password', joinPassword)
         .single();
 
-      if (error || !cls) throw new Error('Código de clase no encontrado.');
-      if (cls.password !== joinPassword) throw new Error('Contraseña incorrecta.');
+      if (error || !cls) throw new Error('Código de clase o contraseña incorrectos.');
       if (cls.admin_id === user.id) throw new Error('Ya eres el administrador de esta clase.');
 
       const { error: memberError } = await supabase.from('class_members').insert({
