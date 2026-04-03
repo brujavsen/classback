@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Upload, Loader2, Trash2, User,
   MessageCircle, FileText, ChevronDown, ChevronUp,
-  CornerDownRight, Send, X, Image as ImageIcon
+  CornerDownRight, Send, X, Image as ImageIcon, Search
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
@@ -34,12 +34,26 @@ function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 
     if (!replyText.trim() || sendingReply) return;
     setSendingReply(true);
     try {
-      await supabase.from('comments').insert({
+      // Insert reply
+      const { data: replyData } = await supabase.from('comments').insert({
         post_id: postId,
         parent_id: comment.id,
         user_id: user.id,
         content: replyText.trim(),
-      });
+      }).select().single();
+
+      // Notify original comment owner (if not self)
+      if (comment.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: comment.user_id,
+          actor_id: user.id,
+          actor_username: user.username || 'Alguien',
+          type: 'new_reply',
+          post_id: postId,
+          comment_id: comment.id,
+        }).catch(() => {});
+      }
+
       setReplyText('');
       setShowReplyInput(false);
     } finally {
@@ -168,6 +182,18 @@ function PostCard({ post, user, isAdmin, onDelete, onReact, onDeleteComment }) {
         user_id: user.id,
         content: commentText.trim(),
       });
+
+      // Notify post owner (if not self)
+      if (post.user_id !== user.id) {
+        supabase.from('notifications').insert({
+          user_id: post.user_id,
+          actor_id: user.id,
+          actor_username: user.username || 'Alguien',
+          type: 'new_comment',
+          post_id: post.id,
+        }).catch(() => {});
+      }
+
       setCommentText('');
       setShowComments(true);
     } finally {
@@ -329,6 +355,7 @@ export default function SpaceChat() {
   const [posts, setPosts] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -421,6 +448,27 @@ export default function SpaceChat() {
         file_type: isImage ? 'image' : 'pdf',
         caption: caption.trim() || null,
       });
+
+      // Notify all space members (except poster)
+      try {
+        const { data: members } = await supabase
+          .from('user_spaces')
+          .select('user_id')
+          .eq('space_id', spaceId)
+          .neq('user_id', user.id);
+
+        if (members?.length) {
+          const notifs = members.map(m => ({
+            user_id: m.user_id,
+            actor_id: user.id,
+            actor_username: user.username || 'Alguien',
+            type: 'new_post',
+            space_id: spaceId,
+            space_name: spaceInfo?.name || 'un espacio',
+          }));
+          await supabase.from('notifications').insert(notifs);
+        }
+      } catch (_) { /* notifications are best-effort */ }
 
       closeUploadModal();
     } catch (err) {
@@ -525,6 +573,25 @@ export default function SpaceChat() {
 
       {/* Feed */}
       <main className="feed-content">
+        {/* Search Bar */}
+        {!fetching && posts.length > 0 && (
+          <div className="feed-search-bar">
+            <Search size={16} className="feed-search-icon" />
+            <input
+              type="text"
+              placeholder="Buscar publicaciones por descripción o autor..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="feed-search-input"
+            />
+            {searchQuery && (
+              <button className="feed-search-clear" onClick={() => setSearchQuery('')}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        )}
+
         {fetching ? (
           <div className="loading-state">
             <Loader2 size={32} className="spin" />
@@ -541,21 +608,37 @@ export default function SpaceChat() {
               <Upload size={16} /> Subir contenido
             </button>
           </div>
-        ) : (
-          <div className="posts-feed">
-            {posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                user={user}
-                isAdmin={isAdmin}
-                onDelete={handleDeletePost}
-                onReact={handleReact}
-                onDeleteComment={handleDeleteComment}
-              />
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const q = searchQuery.trim().toLowerCase();
+          const filtered = q
+            ? posts.filter(p =>
+                p.caption?.toLowerCase().includes(q) ||
+                p.profiles?.username?.toLowerCase().includes(q)
+              )
+            : posts;
+
+          return filtered.length === 0 ? (
+            <div className="empty-feed">
+              <div className="empty-feed-icon"><Search size={40} /></div>
+              <h3>Sin resultados</h3>
+              <p>No se encontraron publicaciones para <strong>"{searchQuery}"</strong></p>
+            </div>
+          ) : (
+            <div className="posts-feed">
+              {filtered.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  user={user}
+                  isAdmin={isAdmin}
+                  onDelete={handleDeletePost}
+                  onReact={handleReact}
+                  onDeleteComment={handleDeleteComment}
+                />
+              ))}
+            </div>
+          );
+        })()}
       </main>
 
       {/* Upload Modal */}

@@ -14,7 +14,7 @@ dist-ssr
 dev-dist
 *.local
 
-# Archivos de Seguridad y Entorno (Sensibles)
+# Archivos de Seguridad y Entorno (NUNCA subir al repo)
 .env
 .env.local
 .env.*.local
@@ -23,13 +23,29 @@ dev-dist
 .env.production
 !.env.example
 
+# Base de datos / Migraciones con credenciales (si se generan locales)
+*.sql.local
+
+# OS / Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Coverage / Tests
+coverage
+*.lcov
+.nyc_output
+
+# PWA workbox cache autogenerado
+sw.js
+workbox-*.js

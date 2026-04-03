@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
 import Typewriter from '../components/Typewriter';
+import NotificationBell from '../components/NotificationBell';
 import './Dashboard.css';
 
 const CARD_COLORS = ['#6366f1', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -177,6 +178,7 @@ export default function Dashboard() {
             <span className={`role-badge ${user?.role}`}>
               {user?.role === 'admin' ? 'Admin' : 'Alumno'}
             </span>
+            <NotificationBell />
             <button className="icon-action-btn" title="Perfil" onClick={() => navigate('/profile')}>
               <User size={18} />
             </button>
