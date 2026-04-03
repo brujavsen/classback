@@ -13,9 +13,32 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    // Reject obviously fake numeric domains like 123123.net
+    const domain = email.split('@')[1];
+    if (/^\d+\./.test(domain) || domain.split('.').length < 2) return false;
+    return true;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!email.trim()) {
+      setError('Por favor, ingresa tu correo electrónico.');
+      return;
+    }
+    if (!validateEmail(email.trim())) {
+      setError('Por favor, ingresa un correo electrónico verídico y válido.');
+      return;
+    }
+    if (!password) {
+      setError('Por favor, ingresa tu contraseña.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -50,10 +73,9 @@ export default function Login() {
     <div className="login-container animate-fade-in">
       <div className="login-card glass-panel">
         <div className="login-header">
-          <div className="logo-icon-wrapper">
-            <BookOpen size={32} className="logo-icon" />
+          <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '10%' }} />
           </div>
-          <Typewriter />
           <p>Tu material de estudio, organizado.</p>
         </div>
 
@@ -61,7 +83,7 @@ export default function Login() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="auth-provider-icon" />
           Continuar con Google
         </button>
-        
+
         <div className="auth-separator">
           <span>o usa tu correo</span>
         </div>
@@ -75,7 +97,6 @@ export default function Login() {
                 type="email"
                 id="email"
                 placeholder="tu@correo.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -94,7 +115,6 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 placeholder="••••••••"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

@@ -21,6 +21,10 @@ export default function CompleteProfile() {
     e.preventDefault();
     setError('');
 
+    if (!username.trim()) {
+      setError('Por favor, elige un nombre de usuario.');
+      return;
+    }
     if (username.trim().includes(' ')) {
       setError('El nombre de usuario no puede tener espacios.');
       return;
@@ -88,7 +92,6 @@ export default function CompleteProfile() {
                 type="text"
                 id="comp-username"
                 placeholder="Ej: juanperez23"
-                required
                 minLength={3}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}

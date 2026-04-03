@@ -4,6 +4,8 @@ import { Book, Plus, Users, PlusCircle, Settings, Loader2, X, User, Trash2 } fro
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
+import Typewriter from '../components/Typewriter';
+import NotificationBell from '../components/NotificationBell';
 import './Dashboard.css';
 
 const CARD_COLORS = ['#6366f1', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -47,13 +49,13 @@ export default function Dashboard() {
         .from('class_members')
         .select('class_id, classes(*)')
         .eq('user_id', user.id);
-      
+
       const memberClasses = (memberClassesData || []).map(m => m.classes);
 
       // Combine and unique by ID (in case an admin is also a member, though unlikely)
       const combined = [...(adminClasses || []), ...memberClasses];
       const unique = Array.from(new Map(combined.map(c => [c.id, c])).values());
-      
+
       setClasses(unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } finally {
       setFetching(false);
@@ -65,6 +67,16 @@ export default function Dashboard() {
   const handleJoin = async (e) => {
     e.preventDefault();
     setJoinError('');
+
+    if (!joinCode.trim()) {
+      setJoinError('Por favor, ingresa el código de la clase.');
+      return;
+    }
+    if (!joinPassword) {
+      setJoinError('Por favor, ingresa la contraseña.');
+      return;
+    }
+
     setJoining(true);
     try {
       const { data: cls, error } = await supabase
@@ -81,7 +93,7 @@ export default function Dashboard() {
         class_id: cls.id,
         user_id: user.id,
       });
-      if (memberError && memberError.code !== '23505') throw memberError; 
+      if (memberError && memberError.code !== '23505') throw memberError;
 
       setShowJoin(false);
       setJoinCode(''); setJoinPassword('');
@@ -96,6 +108,20 @@ export default function Dashboard() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError('');
+
+    if (!newName.trim()) {
+      setCreateError('Por favor, ingresa el nombre de la clase.');
+      return;
+    }
+    if (!newCode.trim()) {
+      setCreateError('Por favor, ingresa el código único.');
+      return;
+    }
+    if (!newPassword) {
+      setCreateError('Por favor, ingresa una contraseña de acceso.');
+      return;
+    }
+
     setCreating(true);
     try {
       const { error } = await supabase.from('classes').insert({
@@ -136,8 +162,7 @@ export default function Dashboard() {
     <div className="dashboard-layout animate-fade-in">
       <header className="dashboard-header glass-panel">
         <div className="header-brand">
-          <Book className="brand-icon" />
-          <h2>ClassBack</h2>
+          <Typewriter />
         </div>
         <div className="header-actions">
           {isAdmin && (
@@ -148,11 +173,12 @@ export default function Dashboard() {
           <button className="btn-secondary header-btn" onClick={() => setShowJoin(true)}>
             <PlusCircle size={18} /> Unirse a clase
           </button>
-          
+
           <div className="header-user">
             <span className={`role-badge ${user?.role}`}>
               {user?.role === 'admin' ? 'Admin' : 'Alumno'}
             </span>
+            <NotificationBell />
             <button className="icon-action-btn" title="Perfil" onClick={() => navigate('/profile')}>
               <User size={18} />
             </button>
@@ -241,11 +267,11 @@ export default function Dashboard() {
             <form onSubmit={handleJoin}>
               <div className="form-group">
                 <label>Código de clase</label>
-                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} required />
+                <input type="text" placeholder="Ej: AM-2024" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} required />
+                <input type="password" placeholder="••••••••" value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} />
               </div>
               {joinError && <p className="form-error" style={{ marginTop: 8 }}>{joinError}</p>}
               <div className="modal-actions">
@@ -269,15 +295,15 @@ export default function Dashboard() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label>Nombre de la clase</label>
-                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Código único</label>
-                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)} required />
+                <input type="text" placeholder="Ej: AM-2024" value={newCode} onChange={(e) => setNewCode(e.target.value)} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Contraseña de acceso</label>
-                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               {createError && <p className="form-error" style={{ marginTop: 8 }}>{createError}</p>}
               <div className="modal-actions">

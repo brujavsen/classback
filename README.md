@@ -1,16 +1,30 @@
-# React + Vite
+# ClassBack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Plataforma educativa colaborativa para compartir material de estudio de forma organizada y en tiempo real.
 
-Currently, two official plugins are available:
+## ¿Qué es?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+ClassBack es una aplicación web pensada para grupos de estudio y aulas virtuales. Permite a los docentes o delegados crear espacios de clase donde pueden publicar imágenes y documentos, y a los alumnos interactuar con ese material mediante comentarios, respuestas en hilo y reacciones.
 
-## React Compiler
+## ¿Cómo funciona?
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Se crean **clases** con un código y contraseña de acceso
+- Dentro de cada clase hay **espacios temáticos** (ej: Teoría, Práctica, Consultas)
+- Los usuarios publican **imágenes o PDFs** en cada espacio
+- Cualquier miembro puede **comentar, responder y reaccionar** al material
+- Todo ocurre en **tiempo real**, sin necesidad de recargar la página
+- Los usuarios reciben **notificaciones** cuando hay actividad nueva
 
-## Expanding the ESLint configuration
+## Roles
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Administrador** — crea y gestiona las clases, modera el contenido  
+**Alumno** — se une a las clases y participa en los espacios
+
+## Estado del proyecto
+
+En desarrollo activo.
+
+Versión 1.0.0
+---
+
+*ClassBack — Material de estudio, organizado.*

@@ -20,9 +20,44 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email) => {
+    // Basic regex
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return false;
+    
+    // Strict Verification: Reject purely numeric domains (spam-like) or missing providers
+    const domain = email.split('@')[1];
+    // Reject things like "123123.net" or "83749.xxx"
+    if (/^\d+\./.test(domain)) return false;
+    
+    // List of common disposable or known fake patterns (Basic prevention)
+    const badDomains = ['example.com', 'test.com', 'mailinator.com', '10minutemail.com'];
+    if (badDomains.includes(domain.toLowerCase())) return false;
+
+    return true;
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+
+    // MANUAL VALIDATIONS (replacing HTML required)
+    if (!email.trim()) {
+       setError('Por favor, ingresa tu correo electrónico.');
+       return;
+    }
+    if (!validateEmail(email.trim())) {
+       setError('Usa un correo real (ej: gmail, hotmail). De lo contrario, no podrás recuperar tu cuenta.');
+       return;
+    }
+    if (!username.trim()) {
+       setError('Por favor, elige un nombre de usuario.');
+       return;
+    }
+    if (!password) {
+       setError('Por favor, crea una contraseña.');
+       return;
+    }
 
     if (password !== confirm) {
       setError('Las contraseñas no coinciden.');
@@ -47,7 +82,7 @@ export default function Register() {
         }
         throw signUpError;
       }
-      
+
       if (!data?.user) throw new Error('No se pudo obtener la sesión al registrar.');
 
       // 2. Insert profile row
@@ -59,7 +94,7 @@ export default function Register() {
 
       if (profileError) {
         if (profileError.message.includes('unique')) {
-           throw new Error('El nombre de usuario ya está en uso, intenta con otro.');
+          throw new Error('El nombre de usuario ya está en uso, intenta con otro.');
         }
         throw profileError;
       }
@@ -90,10 +125,9 @@ export default function Register() {
     <div className="login-container animate-fade-in">
       <div className="login-card glass-panel">
         <div className="login-header">
-          <div className="logo-icon-wrapper">
-            <BookOpen size={32} className="logo-icon" />
+          <div className="logo-icon-wrapper" style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
+            <img src="/classback-logo.png" alt="ClassBack" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '10%' }} />
           </div>
-          <Typewriter />
           <p>Únete a ClassBack y organiza tu material.</p>
         </div>
 
@@ -127,7 +161,7 @@ export default function Register() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="auth-provider-icon" />
           Registrarse con Google
         </button>
-        
+
         <div className="auth-separator">
           <span>o usa tu correo real</span>
         </div>
@@ -141,7 +175,6 @@ export default function Register() {
                 type="email"
                 id="reg-email"
                 placeholder="tu@correo.com"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -156,7 +189,6 @@ export default function Register() {
                 type="text"
                 id="reg-username"
                 placeholder="tu_usuario"
-                required
                 minLength={3}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -172,7 +204,6 @@ export default function Register() {
                 type={showPassword ? 'text' : 'password'}
                 id="reg-password"
                 placeholder="••••••••"
-                required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -195,7 +226,6 @@ export default function Register() {
                 type={showConfirm ? 'text' : 'password'}
                 id="reg-password-confirm"
                 placeholder="••••••••"
-                required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
               />
