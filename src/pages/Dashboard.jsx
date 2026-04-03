@@ -6,6 +6,7 @@ import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
 import Typewriter from '../components/Typewriter';
 import NotificationBell from '../components/NotificationBell';
+import { showToast } from '../lib/toast';
 import './Dashboard.css';
 
 const CARD_COLORS = ['#6366f1', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -33,6 +34,19 @@ export default function Dashboard() {
   const [newPassword, setNewPassword] = useState('');
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
+
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    if (val.length > 10) {
+      showToast('El nombre de la clase no puede exceder 10 caracteres', 'warning');
+      return;
+    }
+    if (val && !/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+$/.test(val)) {
+      showToast('Solo se permiten letras y números sin espacios', 'warning');
+      return;
+    }
+    setNewName(val);
+  };
 
   const fetchClasses = async () => {
     if (!user) return;
@@ -303,7 +317,7 @@ export default function Dashboard() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label>Nombre de la clase</label>
-                <input type="text" placeholder="Ej: Analisis" value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={10} />
+                <input type="text" placeholder="Ej: Analisis" value={newName} onChange={handleNameChange} maxLength={10} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Código único</label>

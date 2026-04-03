@@ -8,14 +8,13 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
+import { showToast } from '../lib/toast';
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 import './SpaceChat.css';
 
 const REACTIONS = [
   { emoji: '❤️', label: 'Me encanta' },
-  { emoji: '👍', label: 'Me gusta' },
-  { emoji: '🔥', label: 'Fuego' },
-  { emoji: '👀', label: 'Interesante' },
-  { emoji: '😮', label: 'Sorprendente' },
 ];
 
 // ─────────────────────────────────────────────
@@ -32,7 +31,11 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
   const replies = comment.replies || [];
 
   const sendReply = async () => {
-    if (!replyText.trim() || sendingReply || cooldown) return;
+    if (!replyText.trim() || sendingReply) return;
+    if (cooldown) {
+      showToast('Espera unos segundos antes de enviar otro comentario.', 'warning');
+      return;
+    }
     setSendingReply(true);
     try {
       // Insert reply
@@ -184,7 +187,11 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
   const totalComments = (post.comments || []).length;
 
   const sendComment = async () => {
-    if (!commentText.trim() || sending || cooldown) return;
+    if (!commentText.trim() || sending) return;
+    if (cooldown) {
+      showToast('Espera unos segundos antes de enviar otro comentario.', 'warning');
+      return;
+    }
     setSending(true);
     try {
       await supabase.from('comments').insert({
@@ -250,12 +257,13 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
 
       {/* ── File Content ── */}
       {post.file_type === 'image' ? (
-        <img
-          src={post.file_url}
-          alt="Contenido"
-          className="post-image"
-          onClick={() => window.open(post.file_url, '_blank')}
-        />
+        <Zoom>
+          <img
+            src={post.file_url}
+            alt="Contenido"
+            className="post-image"
+          />
+        </Zoom>
       ) : (
         <a
           href={post.file_url}

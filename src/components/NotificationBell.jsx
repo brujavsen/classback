@@ -3,6 +3,7 @@ import { Bell, Check, CheckCheck, X, MessageCircle, Upload, CornerDownRight } fr
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { showToast } from '../lib/toast';
 import './NotificationBell.css';
 
 const TYPE_CONFIG = {
@@ -65,6 +66,10 @@ export default function NotificationBell() {
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
         setNotifications(prev => [payload.new, ...prev]);
+        const config = TYPE_CONFIG[payload.new.type];
+        if (config && payload.new.actor_id !== user.id) {
+          showToast(config.label(payload.new), 'info');
+        }
       })
       .subscribe();
 

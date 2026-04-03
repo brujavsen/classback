@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, Plus, X, Loader2, BookOpen, Files, Check, Trash2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, MessageSquare, Plus, X, Loader2, BookOpen, Files, Check, Trash2, Users, User } from 'lucide-react';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
+import { showToast } from '../lib/toast';
 import './ClassView.css';
 
 function SpaceIcon({ name }) {
@@ -25,12 +25,27 @@ export default function ClassView() {
   const [joinedSpaceIds, setJoinedSpaceIds] = useState(new Set());
   const [fetching, setFetching] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [membersList, setMembersList] = useState([]);
 
   // Create space modal (admin)
   const [showCreate, setShowCreate] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
+
+  const handleSpaceNameChange = (e) => {
+    const val = e.target.value;
+    if (val.length > 10) {
+      showToast('El nombre del espacio no puede exceder 10 caracteres', 'warning');
+      return;
+    }
+    if (val && !/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+$/.test(val)) {
+      showToast('Solo se permiten letras y números sin espacios', 'warning');
+      return;
+    }
+    setNewSpaceName(val);
+  };
 
   const fetchData = async () => {
     if (!user) return;
@@ -39,10 +54,16 @@ export default function ClassView() {
       const { data: cls } = await supabase.from('classes').select('name, code, admin_id').eq('id', classId).single();
       const { data: sps } = await supabase.from('spaces').select('*').eq('class_id', classId).order('created_at');
       const { data: joined } = await supabase.from('user_spaces').select('space_id').eq('class_id', classId).eq('user_id', user.id);
+      
+      const { data: mems } = await supabase
+        .from('class_members')
+        .select('user_id, profiles(username, avatar_url)')
+        .eq('class_id', classId);
 
       setClassInfo(cls);
       setAllSpaces(sps || []);
       setJoinedSpaceIds(new Set((joined || []).map(j => j.space_id)));
+      setMembersList(mems || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -151,9 +172,14 @@ export default function ClassView() {
           <h2>{classInfo?.name || 'Clase'}</h2>
           <span className="class-badge">{classInfo?.code}</span>
         </div>
-        <button className="btn-primary open-spaces-btn" onClick={() => setShowPopup(true)}>
-          <MessageSquare size={16} /> Elegir Espacios
-        </button>
+        <div className="header-actions">
+          <button className="icon-action-btn" onClick={() => setShowMembers(!showMembers)} title="Miembros">
+            <Users size={18} />
+          </button>
+          <button className="btn-primary open-spaces-btn" onClick={() => setShowPopup(true)}>
+            <MessageSquare size={16} /> Elegir Espacios
+          </button>
+        </div>
       </header>
 
       <main className="class-content">
@@ -197,6 +223,33 @@ export default function ClassView() {
           </div>
         )}
       </main>
+
+      {/* Members Sidebar */}
+      {showMembers && (
+        <aside className="members-sidebar glass-panel animate-fade-in">
+          <div className="sidebar-header">
+            <h3>Miembros del grupo ({membersList.length + 1})</h3>
+            <button className="close-popup-btn" onClick={() => setShowMembers(false)}><X size={18} /></button>
+          </div>
+          <div className="members-list">
+            {/* Show Admin explicitly */}
+            <div className="member-item">
+               <div className="tiny-avatar-placeholder"><User size={12} /></div>
+               <span>Admin de la clase</span>
+               <span className="role-badge admin">Admin</span>
+            </div>
+            {membersList.map(m => (
+              <div key={m.user_id} className="member-item">
+                {m.profiles?.avatar_url 
+                  ? <img src={m.profiles.avatar_url} className="tiny-avatar" alt="" />
+                  : <div className="tiny-avatar-placeholder"><User size={12} /></div>
+                }
+                <span>{m.profiles?.username || 'Alumno'}</span>
+              </div>
+            ))}
+          </div>
+        </aside>
+      )}
 
       {/* Subscription Popup (both roles) */}
       {showPopup && (
@@ -250,7 +303,7 @@ export default function ClassView() {
               <div className="form-group">
                 <label>Nombre del espacio</label>
                 <input type="text" placeholder="Ej: Teoria" value={newSpaceName}
-                  onChange={(e) => setNewSpaceName(e.target.value)} maxLength={10} />
+                  onChange={handleSpaceNameChange} maxLength={10} />
               </div>
               {createError && <p className="form-error" style={{ marginTop: 8 }}>{createError}</p>}
               <div className="modal-actions">
