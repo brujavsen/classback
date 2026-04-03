@@ -825,3 +825,8 @@
 
 .composer-input { width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: inherit; font-size: 15px; outline: none; transition: var(--transition); box-sizing: border-box; }
 .composer-input:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+
+.carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; transition: background 0.2s; }
+.carousel-arrow:hover { background: rgba(0,0,0,0.8); }
+.carousel-arrow.left { left: 8px; }
+.carousel-arrow.right { right: 8px; }

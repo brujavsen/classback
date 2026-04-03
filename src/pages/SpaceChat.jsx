@@ -3,15 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Upload, Loader2, Trash2, User,
   MessageCircle, FileText, ChevronDown, ChevronUp,
-  CornerDownRight, Send, X, Image as ImageIcon, Search
+  CornerDownRight, Send, X, Image as ImageIcon, Search,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../lib/toast';
-import Lightbox from "yet-another-react-lightbox";
-import ZoomPlugin from "yet-another-react-lightbox/plugins/zoom";
-import "yet-another-react-lightbox/styles.css";
 import './SpaceChat.css';
 
 const REACTIONS = [
@@ -216,6 +214,18 @@ function PostCard({ post, user, isAdmin, classAdminId, spaceInfo, onDelete, onRe
     setActiveSlide(Math.round(scrollLeft / width));
   };
 
+  const scrollPrev = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: -carouselRef.current.clientWidth, behavior: 'smooth' });
+    }
+  };
+
+  const scrollNext = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' });
+    }
+  };
+
   const canDelete = isAdmin || post.user_id === user?.id;
   const rootComments = (post.comments || []).filter(c => !c.parent_id);
   const totalComments = (post.comments || []).length;
@@ -311,18 +321,28 @@ function PostCard({ post, user, isAdmin, classAdminId, spaceInfo, onDelete, onRe
                     src={url}
                     alt={`Contenido ${idx + 1}`}
                     className="post-image"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => onImageClick && onImageClick({ urls, index: idx })}
                   />
                 </div>
               ))}
             </div>
             {urls.length > 1 && (
-              <div className="carousel-dots">
-                {urls.map((_, idx) => (
-                  <div key={idx} className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`} />
-                ))}
-              </div>
+              <>
+                {activeSlide > 0 && (
+                  <button className="carousel-arrow left" onClick={scrollPrev}>
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+                {activeSlide < urls.length - 1 && (
+                  <button className="carousel-arrow right" onClick={scrollNext}>
+                    <ChevronRight size={20} />
+                  </button>
+                )}
+                <div className="carousel-dots">
+                  {urls.map((_, idx) => (
+                    <div key={idx} className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`} />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         );
@@ -447,7 +467,6 @@ export default function SpaceChat() {
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [lightboxData, setLightboxData] = useState(null);
 
   // Upload state
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -571,7 +590,7 @@ export default function SpaceChat() {
         }
       } catch (_) { /* notifications are best-effort */ }
 
-      closeUploadModal();
+      cancelUpload();
     } catch (err) {
       showAlert('Error al subir', err.message);
     } finally {
@@ -680,16 +699,6 @@ export default function SpaceChat() {
   // ─────────────────────────────────────────
   return (
     <div className="feed-layout animate-fade-in">
-      {/* Lightbox for zooming images */}
-      <Lightbox
-        open={!!lightboxData}
-        close={() => setLightboxData(null)}
-        index={lightboxData?.index || 0}
-        slides={lightboxData?.urls.map(src => ({ src })) || []}
-        plugins={[ZoomPlugin]}
-        zoom={{ scrollToZoom: true, maxZoomPixelRatio: 3 }}
-      />
-
       {/* Header */}
       <header className="chat-header glass-panel">
         <button className="back-btn" onClick={() => navigate(`/class/${classId}`)}>
@@ -831,7 +840,6 @@ export default function SpaceChat() {
                   onDelete={handleDeletePost}
                   onReact={handleReact}
                   onDeleteComment={handleDeleteComment}
-                  onImageClick={setLightboxData}
                 />
               ))}
             </div>
