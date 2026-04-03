@@ -60,7 +60,7 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
           post_id: postId,
           comment_id: comment.id,
         }));
-        await supabase.from('notifications').insert(notifs).catch(() => {});
+        await supabase.from('notifications').insert(notifs).then(null, () => {});
       }
 
       setReplyText('');
@@ -214,7 +214,7 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
           type: 'new_comment',
           post_id: post.id,
         }));
-        supabase.from('notifications').insert(notifs).catch(() => {});
+        supabase.from('notifications').insert(notifs).then(null, () => {});
       }
 
       setCommentText('');
@@ -530,7 +530,7 @@ export default function SpaceChat() {
           if (error) throw error;
           // Best-effort storage cleanup
           const storagePath = fileUrl?.split('/classback-images/')[1];
-          if (storagePath) supabase.storage.from('classback-images').remove([storagePath]).catch(() => {});
+          if (storagePath) supabase.storage.from('classback-images').remove([storagePath]).then(null, () => {});
         } catch (err) {
           showAlert('Error', 'No se pudo eliminar: ' + err.message);
         }
@@ -596,7 +596,7 @@ export default function SpaceChat() {
             post_id: postId || null,
             comment_id: commentId || null,
           }));
-          supabase.from('notifications').insert(notifs).catch(() => {});
+          supabase.from('notifications').insert(notifs).then(null, () => {});
         }
       }
     } catch (err) {
