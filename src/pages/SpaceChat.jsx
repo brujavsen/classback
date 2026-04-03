@@ -449,8 +449,7 @@ export default function SpaceChat() {
   const [searchQuery, setSearchQuery] = useState('');
   const [lightboxData, setLightboxData] = useState(null);
 
-  // Upload modal state
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  // Upload state
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [caption, setCaption] = useState('');
@@ -515,8 +514,6 @@ export default function SpaceChat() {
       setSelectedFiles(validImages);
       setPreviewUrls(validImages.map(f => URL.createObjectURL(f)));
     }
-
-    setShowUploadModal(true);
     e.target.value = '';
   };
 
@@ -582,8 +579,7 @@ export default function SpaceChat() {
     }
   };
 
-  const closeUploadModal = () => {
-    setShowUploadModal(false);
+  const cancelUpload = () => {
     setSelectedFiles([]);
     setPreviewUrls([]);
     setCaption('');
@@ -723,6 +719,55 @@ export default function SpaceChat() {
 
       {/* Feed */}
       <main className="feed-content">
+        {/* Inline Composer */}
+        {selectedFiles.length > 0 && (
+          <div className="composer-card glass-panel animate-fade-in" style={{ marginBottom: '24px', padding: '20px' }}>
+            <div className="composer-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', margin: 0 }}>Nueva Publicación</h2>
+              <button className="close-popup-btn" onClick={cancelUpload}><X size={18} /></button>
+            </div>
+
+            {/* Preview */}
+            {previewUrls.length > 0 ? (
+              <div className="upload-preview-carousel">
+                {previewUrls.map((url, i) => (
+                  <div className="upload-preview-item" key={i}>
+                    <img src={url} alt={`Preview ${i}`} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="pdf-upload-preview" style={{ marginBottom: '16px' }}>
+                <FileText size={40} />
+                <span>{selectedFiles[0].name}</span>
+              </div>
+            )}
+
+            <div className="composer-form-group" style={{ marginTop: '16px' }}>
+              <input
+                type="text"
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                placeholder="¿De qué trata este material? (opcional)"
+                onKeyDown={e => e.key === 'Enter' && uploadPost()}
+                className="composer-input"
+              />
+            </div>
+
+            <div className="composer-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+              <button className="btn-ghost" onClick={cancelUpload} disabled={uploading}>
+                Cancelar
+              </button>
+              <button className="btn-primary" onClick={uploadPost} disabled={uploading}>
+                {uploading
+                  ? <><Loader2 size={15} className="spin" /> Subiendo...</>
+                  : <><Upload size={15} /> Publicar</>
+                }
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         {!fetching && posts.length > 0 && (
           <div className="feed-search-bar">
@@ -794,56 +839,6 @@ export default function SpaceChat() {
         })()}
       </main>
 
-      {/* Upload Modal */}
-      {showUploadModal && selectedFiles.length > 0 && (
-        <div className="modal-overlay" onClick={closeUploadModal}>
-          <div className="modal-box glass-panel animate-fade-in upload-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Nueva Publicación</h2>
-              <button className="close-popup-btn" onClick={closeUploadModal}><X size={18} /></button>
-            </div>
-
-            {/* Preview */}
-            {previewUrls.length > 0 ? (
-              <div className="upload-preview-carousel">
-                {previewUrls.map((url, i) => (
-                  <div className="upload-preview-item" key={i}>
-                    <img src={url} alt={`Preview ${i}`} />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="pdf-upload-preview">
-                <FileText size={52} />
-                <span>{selectedFiles[0].name}</span>
-              </div>
-            )}
-
-            <div className="form-group">
-              <label>Descripción (opcional)</label>
-              <input
-                type="text"
-                value={caption}
-                onChange={e => setCaption(e.target.value)}
-                placeholder="¿De qué trata este material?"
-                onKeyDown={e => e.key === 'Enter' && uploadPost()}
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button className="btn-ghost" onClick={closeUploadModal} disabled={uploading}>
-                Cancelar
-              </button>
-              <button className="btn-primary" onClick={uploadPost} disabled={uploading}>
-                {uploading
-                  ? <><Loader2 size={15} className="spin" /> Subiendo...</>
-                  : <><Upload size={15} /> Publicar</>
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
