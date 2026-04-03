@@ -4,7 +4,7 @@ Plataforma educativa colaborativa para compartir material de estudio de forma or
 
 ## ¿Qué es?
 
-ClassBack es una aplicación web pensada para grupos de estudio y aulas virtuales. Permite a los docentes crear espacios de clase donde pueden publicar imágenes y documentos, y a los alumnos interactuar con ese material mediante comentarios, respuestas en hilo y reacciones.
+ClassBack es una aplicación web pensada para grupos de estudio y aulas virtuales. Permite a los docentes o delegados crear espacios de clase donde pueden publicar imágenes y documentos, y a los alumnos interactuar con ese material mediante comentarios, respuestas en hilo y reacciones.
 
 ## ¿Cómo funciona?
 
@@ -22,8 +22,9 @@ ClassBack es una aplicación web pensada para grupos de estudio y aulas virtuale
 
 ## Estado del proyecto
 
-En desarrollo activo. Las nuevas funcionalidades se integran desde la rama `develop` hacia `main`.
+En desarrollo activo.
 
+Versión 1.0.0
 ---
 
 *ClassBack — Material de estudio, organizado.*
