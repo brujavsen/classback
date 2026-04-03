@@ -40,7 +40,7 @@ function ReadMoreText({ text, maxLength = 150 }) {
 // ─────────────────────────────────────────────
 // Comment Component (handles replies recursively)
 // ─────────────────────────────────────────────
-function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onReact, depth = 0 }) {
+function Comment({ comment, postId, user, isAdmin, classAdminId, spaceInfo, onDelete, onReact, depth = 0 }) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -79,8 +79,9 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
           type: 'new_reply',
           post_id: postId,
           comment_id: comment.id,
+          space_id: spaceInfo?.id || null
         }));
-        await supabase.from('notifications').insert(notifs).then(null, () => {});
+        await supabase.from('notifications').insert(notifs).then(null, err => console.error('Reply Notif:', err));
       }
 
       setReplyText('');
@@ -185,6 +186,7 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
             user={user}
             isAdmin={isAdmin}
             classAdminId={classAdminId}
+            spaceInfo={spaceInfo}
             onDelete={onDelete}
             onReact={onReact}
             depth={depth + 1}
@@ -198,11 +200,21 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
 // ─────────────────────────────────────────────
 // PostCard Component
 // ─────────────────────────────────────────────
-function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDeleteComment, onImageClick }) {
+function PostCard({ post, user, isAdmin, classAdminId, spaceInfo, onDelete, onReact, onDeleteComment, onImageClick }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
   const [cooldown, setCooldown] = useState(false);
+  
+  const carouselRef = useRef(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const handleScroll = () => {
+    if (!carouselRef.current) return;
+    const scrollLeft = carouselRef.current.scrollLeft;
+    const width = carouselRef.current.clientWidth;
+    setActiveSlide(Math.round(scrollLeft / width));
+  };
 
   const canDelete = isAdmin || post.user_id === user?.id;
   const rootComments = (post.comments || []).filter(c => !c.parent_id);
@@ -235,8 +247,9 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
           actor_username: user.username || 'Alguien',
           type: 'new_comment',
           post_id: post.id,
+          space_id: spaceInfo?.id || null
         }));
-        supabase.from('notifications').insert(notifs).then(null, () => {});
+        supabase.from('notifications').insert(notifs).then(null, err => console.error('Comment Notif:', err));
       }
 
       setCommentText('');
@@ -282,15 +295,38 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
       )}
 
       {/* ── File Content ── */}
-      {post.file_type === 'image' ? (
-        <img
-          src={post.file_url}
-          alt="Contenido"
-          className="post-image"
-          style={{ cursor: 'pointer' }}
-          onClick={() => onImageClick && onImageClick(post.file_url)}
-        />
-      ) : (
+      {post.file_type === 'image' ? (() => {
+        const urls = post.file_url.split(',');
+        return (
+          <div className="post-carousel-container">
+            {urls.length > 1 && (
+              <div className="carousel-counter-pill">
+                {activeSlide + 1} / {urls.length}
+              </div>
+            )}
+            <div className="post-image-carousel" ref={carouselRef} onScroll={handleScroll}>
+              {urls.map((url, idx) => (
+                <div className="carousel-slide" key={idx}>
+                  <img
+                    src={url}
+                    alt={`Contenido ${idx + 1}`}
+                    className="post-image"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => onImageClick && onImageClick({ urls, index: idx })}
+                  />
+                </div>
+              ))}
+            </div>
+            {urls.length > 1 && (
+              <div className="carousel-dots">
+                {urls.map((_, idx) => (
+                  <div key={idx} className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })() : (
         <a
           href={post.file_url}
           target="_blank"
@@ -381,6 +417,7 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
                     user={user}
                     isAdmin={isAdmin}
                     classAdminId={classAdminId}
+                    spaceInfo={spaceInfo}
                     onDelete={onDeleteComment}
                     onReact={onReact}
                     depth={0}
@@ -410,12 +447,12 @@ export default function SpaceChat() {
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxData, setLightboxData] = useState(null);
 
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [caption, setCaption] = useState('');
 
   const fileRef = useRef(null);
@@ -459,47 +496,53 @@ export default function SpaceChat() {
 
   // ── Handle file selection ──
   const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    const isImage = file.type.startsWith('image/');
-    const isPDF = file.type === 'application/pdf';
+    const isPDF = files[0].type === 'application/pdf';
 
-    if (!isImage && !isPDF) {
-      showAlert('Tipo no permitido', 'Solo se permiten imágenes (JPG, PNG, GIF, WEBP) o archivos PDF.');
-      e.target.value = '';
-      return;
+    if (isPDF) {
+      if (files.length > 1) showToast('Solo puedes subir 1 archivo PDF a la vez.', 'warning');
+      setSelectedFiles([files[0]]);
+      setPreviewUrls([]);
+    } else {
+      const validImages = files.filter(f => f.type.startsWith('image/'));
+      if (validImages.length === 0) return;
+      if (validImages.length > 5) {
+        showToast('Solo puedes subir hasta 5 imágenes.', 'warning');
+        validImages.splice(5);
+      }
+      setSelectedFiles(validImages);
+      setPreviewUrls(validImages.map(f => URL.createObjectURL(f)));
     }
-    if (file.size > 15 * 1024 * 1024) {
-      showAlert('Archivo muy grande', 'El archivo no puede superar los 15MB.');
-      e.target.value = '';
-      return;
-    }
 
-    setSelectedFile(file);
-    setPreviewUrl(isImage ? URL.createObjectURL(file) : null);
     setShowUploadModal(true);
     e.target.value = '';
   };
 
   // ── Upload post ──
   const uploadPost = async () => {
-    if (!selectedFile || uploading) return;
+    if (!selectedFiles.length || uploading) return;
     setUploading(true);
     try {
-      const isImage = selectedFile.type.startsWith('image/');
-      const ext = selectedFile.name.split('.').pop();
-      const path = `posts/${spaceId}/${Date.now()}.${ext}`;
+      const isImage = selectedFiles[0].type.startsWith('image/');
+      let fileUrls = [];
 
-      const { error: upErr } = await supabase.storage.from('classback-images').upload(path, selectedFile, { upsert: false });
-      if (upErr) throw upErr;
+      for (const file of selectedFiles) {
+        const ext = file.name.split('.').pop();
+        const path = `posts/${spaceId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-      const { data: urlData } = supabase.storage.from('classback-images').getPublicUrl(path);
+        const { error: upErr } = await supabase.storage.from('classback-images').upload(path, file, { upsert: false });
+        if (upErr) throw upErr;
+
+        const { data: urlData } = supabase.storage.from('classback-images').getPublicUrl(path);
+        fileUrls.push(urlData.publicUrl);
+      }
 
       await supabase.from('posts').insert({
         space_id: spaceId,
         user_id: user.id,
-        file_url: urlData.publicUrl,
+        file_url: fileUrls.join(','),
         file_type: isImage ? 'image' : 'pdf',
         caption: caption.trim() || null,
       });
@@ -541,8 +584,8 @@ export default function SpaceChat() {
 
   const closeUploadModal = () => {
     setShowUploadModal(false);
-    setSelectedFile(null);
-    setPreviewUrl(null);
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setCaption('');
   };
 
@@ -556,8 +599,11 @@ export default function SpaceChat() {
           const { error } = await supabase.from('posts').delete().eq('id', postId);
           if (error) throw error;
           // Best-effort storage cleanup
-          const storagePath = fileUrl?.split('/classback-images/')[1];
-          if (storagePath) supabase.storage.from('classback-images').remove([storagePath]).then(null, () => {});
+          const urls = fileUrl ? fileUrl.split(',') : [];
+          for (const url of urls) {
+            const storagePath = url.split('/classback-images/')[1];
+            if (storagePath) supabase.storage.from('classback-images').remove([storagePath]).then(null, () => {});
+          }
         } catch (err) {
           showAlert('Error', 'No se pudo eliminar: ' + err.message);
         }
@@ -615,15 +661,19 @@ export default function SpaceChat() {
         if (adminId && adminId !== user.id) toNotify.add(adminId);
 
         if (toNotify.size > 0) {
-          const notifs = Array.from(toNotify).map(uid => ({
-            user_id: uid,
-            actor_id: user.id,
-            actor_username: user.username || 'Alguien',
-            type: 'new_reaction',
-            post_id: postId || null,
-            comment_id: commentId || null,
-          }));
-          supabase.from('notifications').insert(notifs).then(null, () => {});
+          const notifs = Array.from(toNotify).map(uid => {
+            const payload = {
+              user_id: uid,
+              actor_id: user.id,
+              actor_username: user.username || 'Alguien',
+              type: 'new_reaction',
+              space_id: spaceInfo?.id || null
+            };
+            if (postId) payload.post_id = postId;
+            if (commentId) payload.comment_id = commentId;
+            return payload;
+          });
+          supabase.from('notifications').insert(notifs).then(null, err => console.error('Reaction Notif:', err));
         }
       }
     } catch (err) {
@@ -636,9 +686,10 @@ export default function SpaceChat() {
     <div className="feed-layout animate-fade-in">
       {/* Lightbox for zooming images */}
       <Lightbox
-        open={!!lightboxSrc}
-        close={() => setLightboxSrc(null)}
-        slides={lightboxSrc ? [{ src: lightboxSrc }] : []}
+        open={!!lightboxData}
+        close={() => setLightboxData(null)}
+        index={lightboxData?.index || 0}
+        slides={lightboxData?.urls.map(src => ({ src })) || []}
         plugins={[ZoomPlugin]}
         zoom={{ scrollToZoom: true, maxZoomPixelRatio: 3 }}
       />
@@ -665,6 +716,7 @@ export default function SpaceChat() {
           accept="image/*,application/pdf"
           ref={fileRef}
           onChange={handleFileSelect}
+          multiple
           style={{ display: 'none' }}
         />
       </header>
@@ -730,10 +782,11 @@ export default function SpaceChat() {
                   user={user}
                   isAdmin={isAdmin}
                   classAdminId={spaceInfo?.classes?.admin_id}
+                  spaceInfo={spaceInfo}
                   onDelete={handleDeletePost}
                   onReact={handleReact}
                   onDeleteComment={handleDeleteComment}
-                  onImageClick={setLightboxSrc}
+                  onImageClick={setLightboxData}
                 />
               ))}
             </div>
@@ -742,7 +795,7 @@ export default function SpaceChat() {
       </main>
 
       {/* Upload Modal */}
-      {showUploadModal && selectedFile && (
+      {showUploadModal && selectedFiles.length > 0 && (
         <div className="modal-overlay" onClick={closeUploadModal}>
           <div className="modal-box glass-panel animate-fade-in upload-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
@@ -751,12 +804,18 @@ export default function SpaceChat() {
             </div>
 
             {/* Preview */}
-            {previewUrl ? (
-              <img src={previewUrl} alt="Preview" className="upload-preview-img" />
+            {previewUrls.length > 0 ? (
+              <div className="upload-preview-carousel">
+                {previewUrls.map((url, i) => (
+                  <div className="upload-preview-item" key={i}>
+                    <img src={url} alt={`Preview ${i}`} />
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="pdf-upload-preview">
                 <FileText size={52} />
-                <span>{selectedFile.name}</span>
+                <span>{selectedFiles[0].name}</span>
               </div>
             )}
 
