@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Plus, X, Loader2, BookOpen, Files, Check, Trash2, Users, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../lib/toast';
