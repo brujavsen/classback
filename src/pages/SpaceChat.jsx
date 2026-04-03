@@ -4,7 +4,7 @@ import {
   ArrowLeft, Upload, Loader2, Trash2, User,
   MessageCircle, FileText, ChevronDown, ChevronUp,
   CornerDownRight, Send, X, Image as ImageIcon, Search,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Plus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
@@ -308,41 +308,40 @@ function PostCard({ post, user, isAdmin, classAdminId, spaceInfo, onDelete, onRe
       {post.file_type === 'image' ? (() => {
         const urls = post.file_url.split(',');
         return (
-          <div className="post-carousel-container">
-            {urls.length > 1 && (
-              <div className="carousel-counter-pill">
-                {activeSlide + 1} / {urls.length}
+          <div className="post-content-wrap">
+            <div className="post-carousel-container">
+              <div className="post-image-carousel" ref={carouselRef} onScroll={handleScroll}>
+                {urls.map((url, idx) => (
+                  <div className="carousel-slide" key={idx}>
+                    <img
+                      src={url}
+                      alt={`Contenido ${idx + 1}`}
+                      className="post-image"
+                    />
+                  </div>
+                ))}
               </div>
-            )}
-            <div className="post-image-carousel" ref={carouselRef} onScroll={handleScroll}>
-              {urls.map((url, idx) => (
-                <div className="carousel-slide" key={idx}>
-                  <img
-                    src={url}
-                    alt={`Contenido ${idx + 1}`}
-                    className="post-image"
-                  />
-                </div>
-              ))}
+              {urls.length > 1 && (
+                <>
+                  {activeSlide > 0 && (
+                    <button className="carousel-arrow left" onClick={scrollPrev}>
+                      <ChevronLeft size={20} />
+                    </button>
+                  )}
+                  {activeSlide < urls.length - 1 && (
+                    <button className="carousel-arrow right" onClick={scrollNext}>
+                      <ChevronRight size={20} />
+                    </button>
+                  )}
+                </>
+              )}
             </div>
             {urls.length > 1 && (
-              <>
-                {activeSlide > 0 && (
-                  <button className="carousel-arrow left" onClick={scrollPrev}>
-                    <ChevronLeft size={20} />
-                  </button>
-                )}
-                {activeSlide < urls.length - 1 && (
-                  <button className="carousel-arrow right" onClick={scrollNext}>
-                    <ChevronRight size={20} />
-                  </button>
-                )}
-                <div className="carousel-dots">
-                  {urls.map((_, idx) => (
-                    <div key={idx} className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`} />
-                  ))}
-                </div>
-              </>
+              <div className="carousel-indicators">
+                {urls.map((_, idx) => (
+                  <div key={idx} className={`indicator-bar ${activeSlide === idx ? 'active' : ''}`} />
+                ))}
+              </div>
             )}
           </div>
         );
@@ -463,6 +462,8 @@ export default function SpaceChat() {
 
   const [spaceInfo, setSpaceInfo] = useState(null);
   const isAdmin = user?.role === 'admin' && spaceInfo?.classes?.admin_id === user?.id;
+  const fileRef = useRef(null);
+  const addMoreRef = useRef(null);
   const [posts, setPosts] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -472,8 +473,6 @@ export default function SpaceChat() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [caption, setCaption] = useState('');
-
-  const fileRef = useRef(null);
 
   // ── Load posts + space info ──
   const fetchPosts = useCallback(async () => {
@@ -520,19 +519,54 @@ export default function SpaceChat() {
     const isPDF = files[0].type === 'application/pdf';
 
     if (isPDF) {
+      if (files[0].size > 15 * 1024 * 1024) {
+        showToast('El archivo PDF no puede superar los 15MB.', 'warning');
+        e.target.value = '';
+        return;
+      }
       if (files.length > 1) showToast('Solo puedes subir 1 archivo PDF a la vez.', 'warning');
       setSelectedFiles([files[0]]);
       setPreviewUrls([]);
     } else {
       const validImages = files.filter(f => f.type.startsWith('image/'));
-      if (validImages.length === 0) return;
-      if (validImages.length > 5) {
-        showToast('Solo puedes subir hasta 5 imágenes.', 'warning');
-        validImages.splice(5);
+      const sizeOkImages = validImages.filter(f => f.size <= 5 * 1024 * 1024);
+
+      if (validImages.length !== sizeOkImages.length) {
+        showToast('Algunas imágenes superan los 5MB y fueron descartadas.', 'warning');
       }
-      setSelectedFiles(validImages);
-      setPreviewUrls(validImages.map(f => URL.createObjectURL(f)));
+
+      if (sizeOkImages.length === 0) { e.target.value = ''; return; }
+
+      if (sizeOkImages.length > 5) {
+        showToast('Solo puedes subir hasta 5 imágenes.', 'warning');
+        sizeOkImages.splice(5);
+      }
+      setSelectedFiles(sizeOkImages);
+      setPreviewUrls(sizeOkImages.map(f => URL.createObjectURL(f)));
     }
+    e.target.value = '';
+  };
+
+  const handleAddMoreFiles = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validImages = files.filter(f => f.type.startsWith('image/'));
+    const sizeOkImages = validImages.filter(f => f.size <= 5 * 1024 * 1024);
+    
+    if (validImages.length !== sizeOkImages.length) {
+      showToast('Algunas imágenes superaban los 5MB y fueron omitidas.', 'warning');
+    }
+
+    if (sizeOkImages.length === 0) return;
+
+    const newFiles = [...selectedFiles, ...sizeOkImages].slice(0, 5);
+    if ([...selectedFiles, ...sizeOkImages].length > 5) {
+      showToast('Límite de 5 imágenes alcanzado.', 'warning');
+    }
+
+    setSelectedFiles(newFiles);
+    setPreviewUrls(newFiles.map(f => URL.createObjectURL(f)));
     e.target.value = '';
   };
 
@@ -613,6 +647,9 @@ export default function SpaceChat() {
         try {
           const { error } = await supabase.from('posts').delete().eq('id', postId);
           if (error) throw error;
+          
+          setPosts(prev => prev.filter(p => p.id !== postId));
+
           // Best-effort storage cleanup
           const urls = fileUrl ? fileUrl.split(',') : [];
           for (const url of urls) {
@@ -740,10 +777,29 @@ export default function SpaceChat() {
             {previewUrls.length > 0 ? (
               <div className="upload-preview-carousel">
                 {previewUrls.map((url, i) => (
-                  <div className="upload-preview-item" key={i}>
+                  <div className="upload-preview-item" key={i} style={{ position: 'relative' }}>
                     <img src={url} alt={`Preview ${i}`} />
                   </div>
                 ))}
+
+                {selectedFiles.length < 5 && (
+                  <div 
+                    className="upload-preview-item add-more"
+                    onClick={() => addMoreRef.current?.click()}
+                    style={{ cursor: 'pointer', background: 'var(--bg-secondary)', flexDirection: 'column', color: 'var(--text-secondary)' }}
+                  >
+                    <Plus size={24} />
+                    <span style={{ fontSize: '12px', marginTop: '4px' }}>Agregar</span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={addMoreRef}
+                  onChange={handleAddMoreFiles}
+                  multiple
+                  style={{ display: 'none' }}
+                />
               </div>
             ) : (
               <div className="pdf-upload-preview" style={{ marginBottom: '16px' }}>
