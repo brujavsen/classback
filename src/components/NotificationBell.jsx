@@ -21,6 +21,11 @@ const TYPE_CONFIG = {
     color: '#10b981',
     label: (n) => `${n.actor_username} respondió tu comentario`,
   },
+  new_reaction: {
+    icon: <Check size={14} />,
+    color: '#f59e0b',
+    label: (n) => `${n.actor_username} reaccionó a tu contenido`,
+  },
 };
 
 export default function NotificationBell() {

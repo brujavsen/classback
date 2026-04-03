@@ -18,9 +18,9 @@ export default function ClassView() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showAlert, showConfirm } = useModal();
-  const isAdmin = user?.role === 'admin';
 
   const [classInfo, setClassInfo] = useState(null);
+  const isAdmin = user?.role === 'admin' && classInfo?.admin_id === user?.id;
   const [allSpaces, setAllSpaces] = useState([]);
   const [joinedSpaceIds, setJoinedSpaceIds] = useState(new Set());
   const [fetching, setFetching] = useState(true);
@@ -36,7 +36,7 @@ export default function ClassView() {
     if (!user) return;
     setFetching(true);
     try {
-      const { data: cls } = await supabase.from('classes').select('name, code').eq('id', classId).single();
+      const { data: cls } = await supabase.from('classes').select('name, code, admin_id').eq('id', classId).single();
       const { data: sps } = await supabase.from('spaces').select('*').eq('class_id', classId).order('created_at');
       const { data: joined } = await supabase.from('user_spaces').select('space_id').eq('class_id', classId).eq('user_id', user.id);
 
@@ -74,6 +74,20 @@ export default function ClassView() {
   const handleCreateSpace = async (e) => {
     e.preventDefault();
     setCreateError('');
+
+    if (!newSpaceName.trim()) {
+      setCreateError('Por favor, ingresa el nombre del espacio.');
+      return;
+    }
+    if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+$/.test(newSpaceName)) {
+      setCreateError('El nombre solo puede contener letras y números (sin espacios).');
+      return;
+    }
+    if (newSpaceName.length > 10) {
+      setCreateError('El nombre no puede tener más de 10 caracteres.');
+      return;
+    }
+
     setCreating(true);
     try {
       const { data, error } = await supabase.from('spaces').insert({
@@ -235,8 +249,8 @@ export default function ClassView() {
             <form onSubmit={handleCreateSpace}>
               <div className="form-group">
                 <label>Nombre del espacio</label>
-                <input type="text" placeholder="Ej: Teoría, Práctica..." value={newSpaceName}
-                  onChange={(e) => setNewSpaceName(e.target.value)} required />
+                <input type="text" placeholder="Ej: Teoria" value={newSpaceName}
+                  onChange={(e) => setNewSpaceName(e.target.value)} maxLength={10} />
               </div>
               {createError && <p className="form-error" style={{ marginTop: 8 }}>{createError}</p>}
               <div className="modal-actions">

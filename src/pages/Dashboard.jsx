@@ -113,6 +113,14 @@ export default function Dashboard() {
       setCreateError('Por favor, ingresa el nombre de la clase.');
       return;
     }
+    if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+$/.test(newName)) {
+      setCreateError('El nombre solo puede contener letras y números (sin espacios).');
+      return;
+    }
+    if (newName.length > 10) {
+      setCreateError('El nombre no puede tener más de 10 caracteres.');
+      return;
+    }
     if (!newCode.trim()) {
       setCreateError('Por favor, ingresa el código único.');
       return;
@@ -295,7 +303,7 @@ export default function Dashboard() {
             <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label>Nombre de la clase</label>
-                <input type="text" placeholder="Ej: Análisis Matemático" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                <input type="text" placeholder="Ej: Analisis" value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={10} />
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Código único</label>

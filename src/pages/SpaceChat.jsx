@@ -21,17 +21,18 @@ const REACTIONS = [
 // ─────────────────────────────────────────────
 // Comment Component (handles replies recursively)
 // ─────────────────────────────────────────────
-function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 }) {
+function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onReact, depth = 0 }) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
 
   const canDelete = isAdmin || comment.user_id === user?.id;
   const replies = comment.replies || [];
 
   const sendReply = async () => {
-    if (!replyText.trim() || sendingReply) return;
+    if (!replyText.trim() || sendingReply || cooldown) return;
     setSendingReply(true);
     try {
       // Insert reply
@@ -42,20 +43,27 @@ function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 
         content: replyText.trim(),
       }).select().single();
 
-      // Notify original comment owner (if not self)
-      if (comment.user_id !== user.id) {
-        await supabase.from('notifications').insert({
-          user_id: comment.user_id,
+      // Notify original comment owner and class admin
+      const toNotify = new Set();
+      if (comment.user_id !== user.id) toNotify.add(comment.user_id);
+      if (classAdminId && classAdminId !== user.id) toNotify.add(classAdminId);
+
+      if (toNotify.size > 0) {
+        const notifs = Array.from(toNotify).map(uid => ({
+          user_id: uid,
           actor_id: user.id,
           actor_username: user.username || 'Alguien',
           type: 'new_reply',
           post_id: postId,
           comment_id: comment.id,
-        }).catch(() => {});
+        }));
+        await supabase.from('notifications').insert(notifs).catch(() => {});
       }
 
       setReplyText('');
       setShowReplyInput(false);
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 5000);
     } finally {
       setSendingReply(false);
     }
@@ -124,10 +132,11 @@ function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 
               onChange={e => setReplyText(e.target.value)}
               placeholder="Escribe una respuesta..."
               className="reply-input"
+              maxLength={200}
               onKeyDown={e => e.key === 'Enter' && sendReply()}
               autoFocus
             />
-            <button className="reply-send-btn" onClick={sendReply} disabled={sendingReply || !replyText.trim()}>
+            <button className="reply-send-btn" onClick={sendReply} disabled={sendingReply || cooldown || !replyText.trim()}>
               {sendingReply ? <Loader2 size={13} className="spin" /> : <Send size={13} />}
             </button>
           </div>
@@ -150,6 +159,7 @@ function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 
             postId={postId}
             user={user}
             isAdmin={isAdmin}
+            classAdminId={classAdminId}
             onDelete={onDelete}
             onReact={onReact}
             depth={depth + 1}
@@ -163,17 +173,18 @@ function Comment({ comment, postId, user, isAdmin, onDelete, onReact, depth = 0 
 // ─────────────────────────────────────────────
 // PostCard Component
 // ─────────────────────────────────────────────
-function PostCard({ post, user, isAdmin, onDelete, onReact, onDeleteComment }) {
+function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDeleteComment }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
 
   const canDelete = isAdmin || post.user_id === user?.id;
   const rootComments = (post.comments || []).filter(c => !c.parent_id);
   const totalComments = (post.comments || []).length;
 
   const sendComment = async () => {
-    if (!commentText.trim() || sending) return;
+    if (!commentText.trim() || sending || cooldown) return;
     setSending(true);
     try {
       await supabase.from('comments').insert({
@@ -183,19 +194,26 @@ function PostCard({ post, user, isAdmin, onDelete, onReact, onDeleteComment }) {
         content: commentText.trim(),
       });
 
-      // Notify post owner (if not self)
-      if (post.user_id !== user.id) {
-        supabase.from('notifications').insert({
-          user_id: post.user_id,
+      // Notify post owner and class admin
+      const toNotify = new Set();
+      if (post.user_id !== user.id) toNotify.add(post.user_id);
+      if (classAdminId && classAdminId !== user.id) toNotify.add(classAdminId);
+      
+      if (toNotify.size > 0) {
+        const notifs = Array.from(toNotify).map(uid => ({
+          user_id: uid,
           actor_id: user.id,
           actor_username: user.username || 'Alguien',
           type: 'new_comment',
           post_id: post.id,
-        }).catch(() => {});
+        }));
+        supabase.from('notifications').insert(notifs).catch(() => {});
       }
 
       setCommentText('');
       setShowComments(true);
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 5000);
     } finally {
       setSending(false);
     }
@@ -303,12 +321,13 @@ function PostCard({ post, user, isAdmin, onDelete, onReact, onDeleteComment }) {
                 onChange={e => setCommentText(e.target.value)}
                 placeholder="Escribe un comentario..."
                 className="comment-input"
+                maxLength={200}
                 onKeyDown={e => e.key === 'Enter' && sendComment()}
               />
               <button
                 className="comment-send-btn"
                 onClick={sendComment}
-                disabled={sending || !commentText.trim()}
+                disabled={sending || cooldown || !commentText.trim()}
               >
                 {sending ? <Loader2 size={13} className="spin" /> : <Send size={13} />}
               </button>
@@ -327,6 +346,7 @@ function PostCard({ post, user, isAdmin, onDelete, onReact, onDeleteComment }) {
                     postId={post.id}
                     user={user}
                     isAdmin={isAdmin}
+                    classAdminId={classAdminId}
                     onDelete={onDeleteComment}
                     onReact={onReact}
                     depth={0}
@@ -349,9 +369,9 @@ export default function SpaceChat() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showAlert, showConfirm } = useModal();
-  const isAdmin = user?.role === 'admin';
 
   const [spaceInfo, setSpaceInfo] = useState(null);
+  const isAdmin = user?.role === 'admin' && spaceInfo?.classes?.admin_id === user?.id;
   const [posts, setPosts] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -369,7 +389,7 @@ export default function SpaceChat() {
   const fetchPosts = useCallback(async () => {
     try {
       const [{ data: sp }, { data: postsData }] = await Promise.all([
-        supabase.from('spaces').select('name, classes(name)').eq('id', spaceId).single(),
+        supabase.from('spaces').select('name, classes(name, admin_id)').eq('id', spaceId).single(),
         supabase
           .from('posts')
           .select(`
@@ -449,7 +469,7 @@ export default function SpaceChat() {
         caption: caption.trim() || null,
       });
 
-      // Notify all space members (except poster)
+      // Notify all space members (except poster) AND the class admin
       try {
         const { data: members } = await supabase
           .from('user_spaces')
@@ -457,9 +477,15 @@ export default function SpaceChat() {
           .eq('space_id', spaceId)
           .neq('user_id', user.id);
 
-        if (members?.length) {
-          const notifs = members.map(m => ({
-            user_id: m.user_id,
+        const notifyIds = new Set((members || []).map(m => m.user_id));
+        const adminId = spaceInfo?.classes?.admin_id;
+        if (adminId && adminId !== user.id) {
+          notifyIds.add(adminId);
+        }
+
+        if (notifyIds.size > 0) {
+          const notifs = Array.from(notifyIds).map(uid => ({
+            user_id: uid,
             actor_id: user.id,
             actor_username: user.username || 'Alguien',
             type: 'new_post',
@@ -536,6 +562,34 @@ export default function SpaceChat() {
         if (postId) payload.post_id = postId;
         if (commentId) payload.comment_id = commentId;
         await supabase.from('reactions').insert(payload);
+
+        // Notify class admin and owner
+        const toNotify = new Set();
+        let targetOwner = null;
+        if (postId) {
+          targetOwner = posts.find(p => p.id === postId)?.user_id;
+        } else if (commentId) {
+          outer: for (const p of posts) {
+            for (const c of (p.comments || [])) {
+              if (c.id === commentId) { targetOwner = c.user_id; break outer; }
+            }
+          }
+        }
+        if (targetOwner && targetOwner !== user.id) toNotify.add(targetOwner);
+        const adminId = spaceInfo?.classes?.admin_id;
+        if (adminId && adminId !== user.id) toNotify.add(adminId);
+
+        if (toNotify.size > 0) {
+          const notifs = Array.from(toNotify).map(uid => ({
+            user_id: uid,
+            actor_id: user.id,
+            actor_username: user.username || 'Alguien',
+            type: 'new_reaction',
+            post_id: postId || null,
+            comment_id: commentId || null,
+          }));
+          supabase.from('notifications').insert(notifs).catch(() => {});
+        }
       }
     } catch (err) {
       console.error('Reaction error:', err);
@@ -631,6 +685,7 @@ export default function SpaceChat() {
                   post={post}
                   user={user}
                   isAdmin={isAdmin}
+                  classAdminId={spaceInfo?.classes?.admin_id}
                   onDelete={handleDeletePost}
                   onReact={handleReact}
                   onDeleteComment={handleDeleteComment}
