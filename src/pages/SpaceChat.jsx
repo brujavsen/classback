@@ -9,13 +9,33 @@ import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../lib/toast';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
+import Lightbox from "yet-another-react-lightbox";
+import ZoomPlugin from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/styles.css";
 import './SpaceChat.css';
 
 const REACTIONS = [
   { emoji: '❤️', label: 'Me encanta' },
 ];
+
+function ReadMoreText({ text, maxLength = 150 }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!text) return null;
+  if (text.length <= maxLength) return <span>{text}</span>;
+
+  return (
+    <span>
+      {expanded ? text : `${text.substring(0, maxLength)}...`}
+      <button 
+        className="read-more-btn" 
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+      >
+        {expanded ? ' ver menos' : ' ver más'}
+      </button>
+    </span>
+  );
+}
 
 // ─────────────────────────────────────────────
 // Comment Component (handles replies recursively)
@@ -85,7 +105,9 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
       <div className="comment-content-col">
         <div className="comment-bubble">
           <span className="comment-author">{comment.profiles?.username}</span>
-          <p className="comment-text">{comment.content}</p>
+          <p className="comment-text">
+            <ReadMoreText text={comment.content} />
+          </p>
         </div>
 
         {/* Reactions for comment */}
@@ -176,7 +198,7 @@ function Comment({ comment, postId, user, isAdmin, classAdminId, onDelete, onRea
 // ─────────────────────────────────────────────
 // PostCard Component
 // ─────────────────────────────────────────────
-function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDeleteComment }) {
+function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDeleteComment, onImageClick }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
@@ -253,17 +275,21 @@ function PostCard({ post, user, isAdmin, classAdminId, onDelete, onReact, onDele
       </div>
 
       {/* ── Caption ── */}
-      {post.caption && <p className="post-caption">{post.caption}</p>}
+      {post.caption && (
+        <p className="post-caption">
+          <ReadMoreText text={post.caption} maxLength={200} />
+        </p>
+      )}
 
       {/* ── File Content ── */}
       {post.file_type === 'image' ? (
-        <Zoom>
-          <img
-            src={post.file_url}
-            alt="Contenido"
-            className="post-image"
-          />
-        </Zoom>
+        <img
+          src={post.file_url}
+          alt="Contenido"
+          className="post-image"
+          style={{ cursor: 'pointer' }}
+          onClick={() => onImageClick && onImageClick(post.file_url)}
+        />
       ) : (
         <a
           href={post.file_url}
@@ -384,6 +410,7 @@ export default function SpaceChat() {
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -607,6 +634,15 @@ export default function SpaceChat() {
   // ─────────────────────────────────────────
   return (
     <div className="feed-layout animate-fade-in">
+      {/* Lightbox for zooming images */}
+      <Lightbox
+        open={!!lightboxSrc}
+        close={() => setLightboxSrc(null)}
+        slides={lightboxSrc ? [{ src: lightboxSrc }] : []}
+        plugins={[ZoomPlugin]}
+        zoom={{ scrollToZoom: true, maxZoomPixelRatio: 3 }}
+      />
+
       {/* Header */}
       <header className="chat-header glass-panel">
         <button className="back-btn" onClick={() => navigate(`/class/${classId}`)}>
@@ -697,6 +733,7 @@ export default function SpaceChat() {
                   onDelete={handleDeletePost}
                   onReact={handleReact}
                   onDeleteComment={handleDeleteComment}
+                  onImageClick={setLightboxSrc}
                 />
               ))}
             </div>

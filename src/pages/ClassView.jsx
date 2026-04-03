@@ -28,6 +28,7 @@ export default function ClassView() {
   const [showPopup, setShowPopup] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [membersList, setMembersList] = useState([]);
+  const [adminProfile, setAdminProfile] = useState(null);
 
   // Create space modal (admin)
   const [showCreate, setShowCreate] = useState(false);
@@ -61,10 +62,17 @@ export default function ClassView() {
         .select('user_id, profiles(username, avatar_url)')
         .eq('class_id', classId);
 
+      let p = null;
+      if (cls?.admin_id) {
+         const { data: pr } = await supabase.from('profiles').select('username, avatar_url').eq('id', cls.admin_id).single();
+         p = pr;
+      }
+
       setClassInfo(cls);
       setAllSpaces(sps || []);
       setJoinedSpaceIds(new Set((joined || []).map(j => j.space_id)));
       setMembersList(mems || []);
+      setAdminProfile(p);
     } catch (err) {
       console.error(err);
     } finally {
@@ -234,11 +242,16 @@ export default function ClassView() {
           </div>
           <div className="members-list">
             {/* Show Admin explicitly */}
-            <div className="member-item">
-               <div className="tiny-avatar-placeholder"><User size={12} /></div>
-               <span>Admin de la clase</span>
-               <span className="role-badge admin">Admin</span>
-            </div>
+            {adminProfile && (
+              <div className="member-item">
+                 {adminProfile.avatar_url
+                   ? <img src={adminProfile.avatar_url} className="tiny-avatar" alt="" />
+                   : <div className="tiny-avatar-placeholder"><User size={12} /></div>
+                 }
+                 <span>{adminProfile.username || 'Admin'}</span>
+                 <span className="role-badge admin">Admin</span>
+              </div>
+            )}
             {membersList.map(m => (
               <div key={m.user_id} className="member-item">
                 {m.profiles?.avatar_url 

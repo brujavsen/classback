@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, CheckCheck, X, MessageCircle, Upload, CornerDownRight } from 'lucide-react';
+import { Bell, Check, CheckCheck, X, MessageCircle, Upload, CornerDownRight, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -23,9 +23,9 @@ const TYPE_CONFIG = {
     label: (n) => `${n.actor_username} respondió tu comentario`,
   },
   new_reaction: {
-    icon: <Check size={14} />,
-    color: '#f59e0b',
-    label: (n) => `${n.actor_username} reaccionó a tu contenido`,
+    icon: <Heart size={14} />,
+    color: '#ef4444',
+    label: (n) => `${n.actor_username} le dio me gusta a tu contenido`,
   },
 };
 
